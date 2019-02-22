@@ -80,8 +80,6 @@ class DribbleLoginManager private constructor() {
                 override fun onSuccess(credential: Credential) {
                     val authToken = credential.accessToken
                     mActivity?.runOnUiThread {
-                        Toast.makeText(mActivity!!, "logged in", Toast.LENGTH_LONG)
-                            .show()
                         getDribbleUserDetails(authToken)
                         Log.d("token",authToken)
                     }
@@ -130,12 +128,7 @@ class DribbleLoginManager private constructor() {
                     setName(jsonObject.getString("name"))
                     setUserId(jsonObject.getString("id").toString())
                     setHtmlUrl(jsonObject.getString("html_url"))
-
-                 /*   val intent  = Intent(mActivity!!,UserDetailsActivity::class.java)
-                    intent.putExtra("loginMode","dribble")
-                    mActivity!!.startActivity(intent)
-*/
-                    val uri = Uri.parse(jsonObject.getString("html_url"))
+                     val uri = Uri.parse(jsonObject.getString("html_url"))
                     val likeIng = Intent(Intent.ACTION_VIEW, uri)
 
                     likeIng.setPackage("mathieumaree.rippple")

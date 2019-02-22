@@ -9,7 +9,6 @@ import com.dropbox.client2.session.AppKeyPair
 import android.util.Log
 import com.dropbox.core.android.Auth
 import com.dropbox.core.v2.users.FullAccount
-import com.dropbox.client2.session.AccessTokenPair
 import android.content.Context.MODE_PRIVATE
 
 
@@ -21,7 +20,6 @@ class DropBoxLoginManager private constructor(){
     private var mActivity : AppCompatActivity?= null
     private var mDropboxApi: DropboxAPI<AndroidAuthSession>? = null
     private var mIsLoggedin : Boolean? = false
-    private var finalLoggedin : Boolean?= false
 
     private var mName : String?=null
     private var mUserId : String?=null
@@ -41,7 +39,6 @@ class DropBoxLoginManager private constructor(){
         mDropboxApi?.session?.unlink()
         clearKeys()
         setloggedin(false)
-        setFinalLoggedIn(false)
     }
 
 
@@ -81,27 +78,6 @@ class DropBoxLoginManager private constructor(){
         val session = AndroidAuthSession(appKeyPair)
         return session
     }
-
-   /* private fun storeAuth(session: AndroidAuthSession) {
-        val oauth2AccessToken = session.oAuth2AccessToken
-        if (oauth2AccessToken != null) {
-            val prefs = mActivity?.getSharedPreferences(ACCOUNT_PREFS_NAME, 0)
-            val edit = prefs?.edit()
-            edit?.putString(ACCESS_KEY, "oauth2:")
-            edit?.putString(ACCESS_SECRET, oauth2AccessToken)
-            edit?.apply()
-            return
-        }
-        val oauth1AccessToken = session.accessTokenPair
-        if (oauth1AccessToken != null) {
-            val prefs = mActivity?.getSharedPreferences(ACCOUNT_PREFS_NAME, 0)
-            val edit = prefs?.edit()
-            edit?.putString(ACCESS_KEY, "oauth2:")
-            edit?.putString(ACCESS_SECRET, oauth2AccessToken)
-            edit?.apply()
-            return
-        }
-    }*/
 
 
     fun setName(name:String){
@@ -173,20 +149,7 @@ class DropBoxLoginManager private constructor(){
         }
     }
 
-/*
-    private fun loadAuth(session: AndroidAuthSession) {
-        val prefs = mActivity!!.getSharedPreferences(ACCOUNT_PREFS_NAME, 0)
-        val key = prefs.getString(ACCESS_KEY, null)
-        val secret = prefs.getString(ACCESS_SECRET, null)
-        if (key == null || secret == null || key.isEmpty() || secret.isEmpty()) return
 
-        if (key == "oauth2:") {
-            session.oAuth2AccessToken = secret
-        } else {
-            session.accessTokenPair = AccessTokenPair(key, secret)
-        }
-    }
-*/
 
 
 
