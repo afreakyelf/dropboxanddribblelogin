@@ -3,9 +3,7 @@ package com.example.logindad
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_main.*
-
 
 
 class MainActivity : AppCompatActivity() {
@@ -23,21 +21,23 @@ class MainActivity : AppCompatActivity() {
 
 
         dribble.setOnClickListener {
-          DribbleLoginManager.INSTANCE.dribbleSignInActivity(this@MainActivity)
+            DribbleLoginManager.INSTANCE.dribbleSignInActivity(this@MainActivity)
         }
 
-        logoutButton.setOnClickListener {
-            DribbleLoginManager.INSTANCE.logout()
-        }
 
 
     }
 
     override fun onResume() {
         super.onResume()
+        if(intent!=null && intent.data != null) {
+            val uri = intent.data
+            val code = uri?.getQueryParameter("code")
+            Log.d("code", code)
+            DribbleLoginManager.INSTANCE.onResume(code)
+        }
 
-            DropBoxLoginManager.INSTANCE.onResume()
-        Log.d("lifecycle","Resume")
+        DropBoxLoginManager.INSTANCE.onResume()
     }
 
 }

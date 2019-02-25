@@ -5,34 +5,24 @@ import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.widget.Toast
-import com.agilie.dribbblesdk.service.auth.AuthCredentials
-import com.agilie.dribbblesdk.service.auth.DribbbleAuthHelper
-import com.agilie.dribbblesdk.service.auth.DribbbleConstants
-import com.google.api.client.auth.oauth2.Credential
 import okhttp3.ResponseBody
 import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import java.util.*
-import android.support.v4.content.ContextCompat.startActivity
 import android.content.ActivityNotFoundException
+import com.google.gson.annotations.SerializedName
+import okhttp3.OkHttpClient
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.GET
+import retrofit2.http.POST
+import retrofit2.http.Query
+import java.util.concurrent.TimeUnit
 
-
-
-private val DRIBBBLE_CLIENT_ID = "0dc9602714f0481e3e5ededb52909407dd164a22f1458f9f80007f7b20aa7180"
-private val DRIBBBLE_CLIENT_SECRET = "bf8c357698375519cfd500de1cea12634cff949102596bcc034d24aecbec71a3"
-private val DRIBBBLE_CLIENT_ACCESS_TOKEN = ""
-private val DRIBBBLE_CLIENT_REDIRECT_URL = "https://www.google.com"
 
 class DribbleLoginManager private constructor() {
     private var mActivity : AppCompatActivity?=null
-
-    private var mName : String?=null
-    private var mUserId : String?=null
-    private var mHtmlUrl : String?=null
-
-
 
     fun dribbleSignInActivity(activity: AppCompatActivity){
         mActivity = activity
@@ -40,83 +30,42 @@ class DribbleLoginManager private constructor() {
     }
 
 
-    fun getName():String{
-        return mName.toString()
-    }
-
-
-    fun getUserId():String{
-        return mUserId.toString()
-    }
-
-    fun getHtmlUrl():String{
-        return mHtmlUrl.toString()
-    }
-
-
-
     private fun init() {
-        val credentials = AuthCredentials.newBuilder(
-            DRIBBBLE_CLIENT_ID,
-            DRIBBBLE_CLIENT_SECRET,
-            DRIBBBLE_CLIENT_ACCESS_TOKEN,
-            DRIBBBLE_CLIENT_REDIRECT_URL
-        )
-            .setScope(
-                Arrays.asList(
-                    DribbbleConstants.SCOPE_PUBLIC,
-                    DribbbleConstants.SCOPE_WRITE,
-                    DribbbleConstants.SCOPE_UPLOAD,
-                    DribbbleConstants.SCOPE_COMMENT
-                )
-            )
-            .build()
 
-        DribbbleAuthHelper.startOauthDialog(
-            mActivity!!,
-            credentials,
-            object : DribbbleAuthHelper.AuthListener {
+        val url = "https://dribbble.com/oauth/authorize?client_id=0dc9602714f0481e3e5ededb52909407dd164a22f1458f9f80007f7b20aa7180" +
+                "&redirect_uri=https://com.example.logindad&scope=public+upload&state=broo"
+        mActivity?.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
 
-                override fun onSuccess(credential: Credential) {
-                    val authToken = credential.accessToken
-                    mActivity?.runOnUiThread {
-                        getDribbleUserDetails(authToken)
-                        Log.d("token",authToken)
-                    }
+    }
+
+
+    fun onResume(code: String?) {
+      getAccessToken(code.toString())
+    }
+
+
+    private fun getAccessToken(code: String) {
+        val apiInterface = DribbleClient.getClient().create(ApiInterfaceForDribble::class.java)
+         val call1 = apiInterface.access(code)
+        call1.enqueue(object : Callback<LoginResponse> {
+            override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) =
+                if (response.isSuccessful) {
+                    val authToken = response.body()!!.access_token
+                    Log.d("auth_token",authToken)
+                    getDribbleUserDetails(authToken)
+                } else {
+                    Toast.makeText(mActivity!!, "Something wrong while getting access token", Toast.LENGTH_SHORT).show()
                 }
+            override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
+                Log.e("Call", t.toString())
+                Toast.makeText(mActivity!!, "Check your Internet Connection", Toast.LENGTH_SHORT).show()
+            }
+        })
 
-                override fun onError(ex: Exception) {
-                    ex.printStackTrace()
-                    // TODO: handle error here
-                }
-            })
     }
-
-
-
-
-    fun setName(name:String){
-        mName = name
-    }
-
-
-    fun setUserId(userid:String){
-        mUserId = userid
-    }
-
-
-    fun setHtmlUrl(htmlUrl:String){
-        mHtmlUrl = htmlUrl
-    }
-
-
-
-
 
     private fun getDribbleUserDetails(authToken: String?) {
-
-
-        val apiInterface = DribbleClient.getClient("https://api.dribbble.com/").create(ApiInterfaceforDribble::class.java)
+        val apiInterface = DribbleClient.getClientForUserDetails().create(ApiInterfaceForDribble::class.java)
         val call = apiInterface.login(authToken!!)
         call.enqueue(object : Callback<ResponseBody> {
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
@@ -124,11 +73,9 @@ class DribbleLoginManager private constructor() {
                 if (response.isSuccessful) {
                     val strtesting = response.body()!!.string()
                     val jsonObject = JSONObject(strtesting)
-                    Log.d("name",jsonObject.getString("name"))
-                    setName(jsonObject.getString("name"))
-                    setUserId(jsonObject.getString("id").toString())
-                    setHtmlUrl(jsonObject.getString("html_url"))
-                     val uri = Uri.parse(jsonObject.getString("html_url"))
+                    val uri = Uri.parse("http://www.dribbble.com/"+jsonObject.getString("login"))
+
+
                     val likeIng = Intent(Intent.ACTION_VIEW, uri)
 
                     likeIng.setPackage("mathieumaree.rippple")
@@ -137,17 +84,16 @@ class DribbleLoginManager private constructor() {
                         mActivity!!.startActivity(likeIng)
                     } catch (e: ActivityNotFoundException) {
                         mActivity?.startActivity(
-                            Intent(
+                                Intent(
                                 Intent.ACTION_VIEW,
-                                Uri.parse(jsonObject.getString("html_url"))
+                                uri
                             )
                         )
                     }
 
 
                 } else {
-
-                    Toast.makeText(mActivity!!, "Something wrong", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(mActivity!!, "Something wrong while getting user details", Toast.LENGTH_SHORT).show()
                 }
 
             }
@@ -161,24 +107,76 @@ class DribbleLoginManager private constructor() {
     }
 
 
-
-    fun logout() {
-        val credentials = AuthCredentials.newBuilder(
-            DRIBBBLE_CLIENT_ID,
-            DRIBBBLE_CLIENT_SECRET,
-            DRIBBBLE_CLIENT_ACCESS_TOKEN,
-            DRIBBBLE_CLIENT_REDIRECT_URL
-        ).build()
-
-        DribbbleAuthHelper.logout(mActivity, credentials)
-    }
-
-
-
     companion object {
         val INSTANCE: DribbleLoginManager by lazy {
             DribbleLoginManager()
         }
     }
+
+}
+
+interface  ApiInterfaceForDribble {
+
+    @GET("v2/user")
+    fun login(@Query("access_token") access_token: String): Call<ResponseBody>
+
+    @POST("oauth/token?client_id=0dc9602714f0481e3e5ededb52909407dd164a22f1458f9f80007f7b20aa7180" +
+            "&client_secret=bf8c357698375519cfd500de1cea12634cff949102596bcc034d24aecbec71a3&redirect_uri=https://com.example.logindad")
+    fun access(@Query("code") code: String): Call<LoginResponse>
+
+
+}
+
+object DribbleClient {
+
+    fun getClient(): Retrofit {
+        var retrofit: Retrofit? = null
+
+        val httpClient = OkHttpClient().newBuilder()
+            .connectTimeout(120, TimeUnit.SECONDS)
+            .readTimeout(120, TimeUnit.SECONDS)
+            .writeTimeout(120, TimeUnit.SECONDS)
+            .build()
+
+        if (retrofit == null) {
+            retrofit = Retrofit.Builder()
+                .baseUrl("https://dribbble.com/")
+                .client(httpClient)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+
+        }
+
+        return retrofit!!
+    }
+
+    fun getClientForUserDetails(): Retrofit {
+        var retrofit: Retrofit? = null
+
+        val httpClient = OkHttpClient().newBuilder()
+            .connectTimeout(120, TimeUnit.SECONDS)
+            .readTimeout(120, TimeUnit.SECONDS)
+            .writeTimeout(120, TimeUnit.SECONDS)
+            .build()
+
+        if (retrofit == null) {
+            retrofit = Retrofit.Builder()
+                .baseUrl("https://api.dribbble.com/")
+                .client(httpClient)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+
+        }
+
+        return retrofit!!
+    }
+
+}
+
+
+class LoginResponse {
+
+    @SerializedName("access_token")
+    var access_token: String? = null
 
 }

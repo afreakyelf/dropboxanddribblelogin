@@ -12,8 +12,6 @@ class UserAccountTask internal constructor(private val dbxClient: DbxClientV2, p
     AsyncTask<Void, Void, FullAccount>() {
     private var error: Exception? = null
 
-
-
     interface TaskDelegate {
         fun onAccountReceived(account: FullAccount)
         fun onError(error: Exception)

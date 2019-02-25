@@ -10,35 +10,28 @@ import android.util.Log
 import com.dropbox.core.android.Auth
 import com.dropbox.core.v2.users.FullAccount
 import android.content.Context.MODE_PRIVATE
+import com.dropbox.core.DbxRequestConfig
+import com.dropbox.core.v2.DbxClientV2
 
+import android.content.Context
 
 private val ACCESS_KEY = "ei928cpkdd1u2x3"
-private val ACCESS_SECRET = "kojfnrfmve1ld9w"
-private val ACCOUNT_PREFS_NAME = "prefs"
 
 class DropBoxLoginManager private constructor(){
     private var mActivity : AppCompatActivity?= null
-    private var mDropboxApi: DropboxAPI<AndroidAuthSession>? = null
     private var mIsLoggedin : Boolean? = false
 
     private var mName : String?=null
     private var mUserId : String?=null
     private var mEmail : String?=null
 
+
     fun dropBoxSignInActivity(activity: AppCompatActivity)
     {
         mActivity = activity
-        mDropboxApi = DropboxAPI(buildSession())
-        mDropboxApi?.session?.startOAuth2Authentication(mActivity)
+
+        Auth.startOAuth2Authentication(mActivity!!, ACCESS_KEY)
         setloggedin(true)
-
-    }
-
-
-    fun logout(){
-        mDropboxApi?.session?.unlink()
-        clearKeys()
-        setloggedin(false)
     }
 
 
@@ -58,26 +51,15 @@ class DropBoxLoginManager private constructor(){
 
     fun onResume() {
 
-        val session = mDropboxApi?.session
-        if (session != null) {
-            if (session.authenticationSuccessful()) {
-                try {
-                    session.finishAuthentication()
-            //        storeAuth(session)
-                    getUserAccount(session.oAuth2AccessToken)
-                } catch (e: IllegalStateException) {
-                }
-            }
+        val accessToken = Auth.getOAuth2Token() //generate Access Token
+        if (accessToken != null) {
+            val prefs = mActivity!!.getSharedPreferences("com.example.logindad", Context.MODE_PRIVATE)
+            prefs.edit().putString("access-token", accessToken).apply()
 
-    }
+            getUserAccount(accessToken)
+        }
     }
 
-
-    private fun buildSession(): AndroidAuthSession {
-        val appKeyPair = AppKeyPair(ACCESS_KEY, ACCESS_SECRET)
-        val session = AndroidAuthSession(appKeyPair)
-        return session
-    }
 
 
     fun setName(name:String){
@@ -97,11 +79,9 @@ class DropBoxLoginManager private constructor(){
 
 
     private fun getUserAccount(accessToken: String) {
-        UserAccountTask(DropboxClient.getClient(accessToken), object : UserAccountTask.TaskDelegate {
+        UserAccountTask(getClient(accessToken), object : UserAccountTask.TaskDelegate {
             override fun onAccountReceived(account: FullAccount) {
-                Log.d("User data", account.email)
-                Log.d("User data", account.name.displayName)
-                Log.d("User data", account.accountType.name)
+
                 setName(account.name.displayName)
                 setEmail(account.email)
                 setUserId(account.accountId)
@@ -135,22 +115,16 @@ class DropBoxLoginManager private constructor(){
      return mIsLoggedin!!
     }
 
-    private fun clearKeys() {
-        val prefs = mActivity?.getSharedPreferences(ACCOUNT_PREFS_NAME, 0)
-        val edit = prefs?.edit()
-        edit?.clear()
-        edit?.apply()
-    }
-
-
     companion object {
         val INSTANCE : DropBoxLoginManager by lazy {
             DropBoxLoginManager()
         }
     }
 
-
-
+    fun getClient(ACCESS_TOKEN: String): DbxClientV2 {
+        val config = DbxRequestConfig("dropbox/sample-app", "en_US")
+        return DbxClientV2(config, ACCESS_TOKEN)
+    }
 
 
 }

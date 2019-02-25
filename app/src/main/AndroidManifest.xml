@@ -18,18 +18,29 @@
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
-
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+
+            <intent-filter>
+                <data   android:host="com.example.logindad"
+                        android:scheme="https" />
+                <action android:name="android.intent.action.VIEW"/>
+            <category android:name="android.intent.category.BROWSABLE"/>
+            <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+
         </activity>
-<!--
+
+
+
+
         <activity
                 android:name="com.dropbox.core.android.AuthActivity"
                 android:configChanges="orientation|keyboard"
                 android:launchMode="singleTask">
             <intent-filter>
 
-                &lt;!&ndash; Insert your app key after “db-  ...” &ndash;&gt;
+                <!-- Insert your app key after “db-  ...” -->
                 <data android:scheme="db-ei928cpkdd1u2x3"/>
 
                 <action android:name="android.intent.action.VIEW"/>
@@ -38,20 +49,19 @@
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
--->
 
-        <activity
+<!--        <activity
                 android:name="com.dropbox.client2.android.AuthActivity"
                 android:launchMode="singleTask"
                 android:configChanges="orientation|keyboard">
             <intent-filter>
-                <!-- Change this to be db- followed by your app key -->
+                &lt;!&ndash; Change this to be db- followed by your app key &ndash;&gt;
                 <data android:scheme="db-ei928cpkdd1u2x3" />
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-        </activity>
+        </activity>-->
 
 
     </application>
