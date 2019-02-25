@@ -37,7 +37,6 @@ class MainActivity : AppCompatActivity() {
             DribbleLoginManager.INSTANCE.onResume(code)
         }
 
-        DropBoxLoginManager.INSTANCE.onResume()
     }
 
 }
